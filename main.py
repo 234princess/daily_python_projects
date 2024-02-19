@@ -1,97 +1,95 @@
+
 from tkinter import *
-import math
+from tkinter import messagebox
+from random import choice, randint, shuffle
+import pyperclip
+# ---------------------------- PASSWORD GENERATOR ------------------------------- #
 
-# ---------------------------- CONSTANTS ------------------------------- #
-PINK = "#e2979c"
-RED = "#e7305b"
-GREEN = "#9bdeac"
-YELLOW = "#f7f5dd"
-FONT_NAME = "Helvetica"
-WORK_MIN = 25
-SHORT_BREAK_MIN = 5
-LONG_BREAK_MIN = 20
-reps = 0
-timer = None
-
-# ---------------------------- TIMER RESET ------------------------------- # 
+# Password Generator Project
 
 
-def reset():
-    window.after_cancel(timer)
-    canvas.itemconfig(timer_text, text="00:00")
+def generate_password():
+    letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u',
+               'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
+               'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
+
+    numbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+    symbols = ['!', '#', '$', '%', '&', '(', ')', '*', '+']
+
+    password_letters = [choice(letters) for _ in range(randint(8, 10))]
+    password_symbols = [choice(symbols) for _ in range(randint(2, 4))]
+    password_numbers = [choice(numbers) for _ in range(randint(2, 4))]
+
+    password_list = password_letters + password_symbols + password_numbers
+    shuffle(password_list)
+
+    password = "".join(password_list)
+    password_entry.insert(0, password)
+    pyperclip.copy(password)
 
 
-# ---------------------------- TIMER MECHANISM ------------------------------- # 
+# ---------------------------- SAVE PASSWORD ------------------------------- #
 
 
-def start_timer():
-    global reps
-    reps += 1
+def check_data():
+    user_website = website_entry.get()
+    user_email = email_entry.get()
+    user_password = password_entry.get()
 
-    work_sec = WORK_MIN * 60
-    short_break_sec = SHORT_BREAK_MIN * 60
-    long_break_sec = LONG_BREAK_MIN * 60
+    if len(user_website) > 0 or len(user_password) > 0:
 
-    if reps % 8 == 0:
-        countdown(long_break_sec)
-        timer_label.config(text="Break", fg=RED)
+        is_ok = messagebox.askokcancel(title=user_website,
+                                       message=f"These are the details entered : \nEmail: {user_email} "
+                                               f"\nPassword: {user_password} \nIs this okay to save? ")
 
-    elif reps % 2 == 0:
-        countdown(short_break_sec)
-        timer_label.config(text="Break", fg=PINK)
+        if is_ok:
+            with open("data.txt", "a") as data:
+                data.write(f"{user_website} | {user_email} | {user_password}\n")
+
+                website_entry.delete(0, END)
+                email_entry.delete(0, END)
+                password_entry.delete(0, END)
     else:
-        countdown(work_sec)
-        timer_label.config(text="Work", fg=GREEN)
-        timer_label.config(text="Timer")
-        check_mark_button.config(text="")
-        
-
-# ---------------------------- COUNTDOWN MECHANISM ------------------------------- # 
-
-
-def countdown(count):
-    count_min = math.floor(count / 60)
-    count_sec = count % 60
-    if count_sec < 10:
-        count_sec = f"0{count_sec}"
-
-    canvas.itemconfig(timer_text, text=f"{count_min}:{count_sec}")
-    if count > 0:
-        global timer
-        timer = window.after(1000, countdown, count - 1)
-    else:
-        start_timer()
-        marks = ""
-        work_sessions = math.floor(reps/2)
-        for _ in range(work_sessions):
-            marks += "✔"
-        check_mark_button.config(text=marks)
-
+        messagebox.showwarning(title="No input received", message="Please do not leave any field empty!")
 
 # ---------------------------- UI SETUP ------------------------------- #
+
+
 window = Tk()
-window.title("Pomodoro")
-window.config(padx=100, pady=50, bg=YELLOW)
 
 
-timer_label = Label(text="Timer", fg=GREEN, bg=YELLOW, font=(FONT_NAME, 30))
-timer_label.grid(column=1, row=0)
+window.title("Password manager")
+window.config(padx=50, pady=50, bg="white")
 
-canvas = Canvas(width=200, height=224, bg=YELLOW, highlightthickness=0)
-tomato_img = PhotoImage(file="tomato.png")
-canvas.create_image(100, 112, image=tomato_img)
-timer_text = canvas.create_text(100, 130, text="00:00", fill="white", font=(FONT_NAME, 35, "bold"))
-canvas.grid(column=1, row=1)
+canvas = Canvas(height=200, width=200)
+logo = PhotoImage(file="logo.png")
+canvas.create_image(100, 100, image=logo)
+canvas.grid(row=0, column=1)
 
+website_label = Label(text="Website:")
+website_label.grid(row=1, column=0)
 
-start_button = Button(text="Start", command=start_timer)
-start_button.grid(column=0, row=2)
+website_entry = Entry(width=35)
+website_entry.grid(row=1, column=1, columnspan=2)
+website_entry.focus()
 
-reset_button = Button(text="Reset", command=reset)
-reset_button.grid(column=2, row=2)
+email_label = Label(text="Email/Username:")
+email_label.grid(row=2, column=0)
 
-check_mark_button = Label(bg=YELLOW)
-check_mark_button.grid(column=1, row=3)
+email_entry = Entry(width=35)
+email_entry.grid(row=2, column=1, columnspan=2)
+email_entry.insert(0, "mcodes@gmail.com")
+
+password_label = Label(text="Password:")
+password_label.grid(row=3, column=0)
+password_entry = Entry(width=17)
+password_entry.grid(row=3, column=1)
+
+password_button = Button(text="Generate Password", command=generate_password)
+password_button.grid(row=3, column=2)
+
+add_button = Button(text="Add", width=30, command=check_data)
+add_button.grid(row=4, column=1, columnspan=2)
 
 
 window.mainloop()
